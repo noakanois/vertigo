@@ -34,7 +34,7 @@ func main() {
 	// 	log.Fatalf("Failed to query shoes: %v", err)
 	// }
 
-    shoes, err := db.QueryShoes()
+	shoes, err := db.QueryShoes()
 	if err != nil {
 		log.Fatalf("Failed to query shoes: %v", err)
 	}

@@ -11,4 +11,3 @@ func ReadSQLFile(filePath string) (string, error) {
 	}
 	return string(sql), nil
 }
-

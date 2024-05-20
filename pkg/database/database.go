@@ -19,7 +19,6 @@ func GetDB(databasePath string) (*DB, error) {
 	return &DB{db}, nil
 }
 
-
 func (db *DB) Initialize() error {
 	query, sqlErr := ReadSQLFile("data/sql/tables/shoes.sql")
 	if sqlErr != nil {
@@ -31,4 +30,3 @@ func (db *DB) Initialize() error {
 	}
 	return nil
 }
-

@@ -2,8 +2,8 @@ package database
 
 import (
 	"fmt"
-	"vertigo/pkg/dataitems"
 	_ "github.com/mattn/go-sqlite3"
+	"vertigo/pkg/dataitems"
 )
 
 func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
@@ -14,7 +14,7 @@ func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
 	}
 	return nil
 }
-func (db *DB) QueryShoesTemplate(query string, params ...interface{})  ([]dataitems.Shoe, error) {
+func (db *DB) QueryShoesTemplate(query string, params ...interface{}) ([]dataitems.Shoe, error) {
 	rows, err := db.Query(query, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying shoes: %v", err)
