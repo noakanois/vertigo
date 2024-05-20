@@ -21,7 +21,7 @@ func main() {
 	// 	Name:       "Chicago 3",
 	// 	Brand:      "Nike",
 	// 	Silhouette: "Air Jordan 1",
-	// 	Nicknames:  "Chicago",
+	// 	Tags:  "Chicago",
 	// }
 
 	// err = db.InsertShoe(shoe)

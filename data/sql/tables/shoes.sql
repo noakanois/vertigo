@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS shoes (
     name TEXT NOT NULL,
     silhouette TEXT, 
     image_url TEXT, 
-    nicknames TEXT
+    tags TEXT
 )

@@ -6,5 +6,5 @@ type Shoe struct {
 	Brand      string
 	Silhouette string
 	ImageUrl   string
-	Nicknames  string
+	Tags       string
 }
