@@ -16,7 +16,6 @@ List all shoes
 
 Add shoe
 
-`./vertigo -add shoes name="Mars Yard" brand="Nike"`
+`./vertigo -add shoes name="Mars Yard" brand="Nike" silhouette="Mars Yard"`
 
-`./vertigo -add shoes name="Mars Yard" brand="Nike" silhouette="Mars Yard" tags="Tom Sachs"`
-
+`./vertigo -add shoes name="Air Force 1 Off White OG" brand="Nike" tags="Off White, Virgil, The Ten"`
