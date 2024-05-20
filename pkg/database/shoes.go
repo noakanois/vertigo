@@ -7,6 +7,9 @@ import (
 )
 
 func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
+	if shoe.Name == "" || shoe.Brand == "" {
+		return fmt.Errorf("error shoe name or brand can't be empty")
+	}
 	query := `INSERT INTO shoes (brand, name, silhouette, image_url, nicknames) VALUES (?, ?, ?, ?, ?)`
 	_, err := db.Exec(query, shoe.Brand, shoe.Name, shoe.Silhouette, shoe.ImageUrl, shoe.Nicknames)
 	if err != nil {
@@ -14,6 +17,7 @@ func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
 	}
 	return nil
 }
+
 func (db *DB) QueryShoesTemplate(query string, params ...interface{}) ([]dataitems.Shoe, error) {
 	rows, err := db.Query(query, params...)
 	if err != nil {
