@@ -18,5 +18,5 @@ Add shoe
 
 `./vertigo -add shoes name="Mars Yard" brand="Nike"`
 
-`./vertigo -add shoes name="Mars Yard" brand="Nike" silhouette="Mars Yard" nicknames="Tom Sachs"`
+`./vertigo -add shoes name="Mars Yard" brand="Nike" silhouette="Mars Yard" tags="Tom Sachs"`
 
