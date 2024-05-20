@@ -1,7 +1,7 @@
 package commandline
 
 import (
-	"fmt" 
+	"fmt"
 	"strings"
 	"vertigo/pkg/dataitems"
 )
