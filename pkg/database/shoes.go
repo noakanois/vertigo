@@ -2,16 +2,14 @@ package database
 
 import (
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"vertigo/pkg/dataitems"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
-	if shoe.Name == "" || shoe.Brand == "" {
-		return fmt.Errorf("error shoe name or brand can't be empty")
-	}
-	query := `INSERT INTO shoes (brand, name, silhouette, image_url, nicknames) VALUES (?, ?, ?, ?, ?)`
-	_, err := db.Exec(query, shoe.Brand, shoe.Name, shoe.Silhouette, shoe.ImageUrl, shoe.Nicknames)
+	query := `INSERT INTO shoes (brand, name, silhouette, image_url, tags) VALUES (?, ?, ?, ?, ?)`
+	_, err := db.Exec(query, shoe.Brand, shoe.Name, shoe.Silhouette, shoe.ImageUrl, shoe.Tags)
 	if err != nil {
 		return fmt.Errorf("error inserting new shoe: %v", err)
 	}
@@ -28,7 +26,7 @@ func (db *DB) QueryShoesTemplate(query string, params ...interface{}) ([]dataite
 	var shoesList []dataitems.Shoe
 	for rows.Next() {
 		var shoe dataitems.Shoe
-		err := rows.Scan(&shoe.ID, &shoe.Brand, &shoe.Name, &shoe.Silhouette, &shoe.ImageUrl, &shoe.Nicknames)
+		err := rows.Scan(&shoe.ID, &shoe.Brand, &shoe.Name, &shoe.Silhouette, &shoe.ImageUrl, &shoe.Tags)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning shoe: %v", err)
 		}
@@ -41,7 +39,7 @@ func (db *DB) QueryShoesTemplate(query string, params ...interface{}) ([]dataite
 }
 
 func (db *DB) QueryShoeByName(name string) ([]dataitems.Shoe, error) {
-	query := `SELECT id, brand, name, silhouette, image_url, nicknames FROM shoes WHERE name = ?`
+	query := `SELECT id, brand, name, silhouette, image_url, tags FROM shoes WHERE name = ?`
 	shoesList, err := db.QueryShoesTemplate(query, name)
 	if err != nil {
 		return nil, err
@@ -50,7 +48,7 @@ func (db *DB) QueryShoeByName(name string) ([]dataitems.Shoe, error) {
 }
 
 func (db *DB) QueryShoes() ([]dataitems.Shoe, error) {
-	query := `SELECT id, brand, name, silhouette, image_url, nicknames FROM shoes`
+	query := `SELECT id, brand, name, silhouette, image_url, tags FROM shoes`
 	shoesList, err := db.QueryShoesTemplate(query)
 	if err != nil {
 		return nil, err

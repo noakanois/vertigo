@@ -1,7 +1,7 @@
 package commandline
 
 import (
-	"fmt"// This example uses SQLite; adapt for your database
+	"fmt" 
 	"strings"
 	"vertigo/pkg/dataitems"
 )
@@ -12,11 +12,11 @@ func ParseShoeParams(args []string) (dataitems.Shoe, error) {
 	for _, arg := range args {
 		parts := strings.SplitN(arg, "=", 2)
 		if len(parts) != 2 {
-			return shoe, fmt.Errorf("invalid parameter format, please use format name= brand= silhouette= (optional shoe_url= nicknames=): %s", arg)
+			return shoe, fmt.Errorf("invalid parameter format, please use format name= brand= silhouette= (optional shoe_url= tags=): %s", arg)
 		}
 
 		key := parts[0]
-		value := strings.Trim(parts[1], "\"") 
+		value := strings.Trim(parts[1], "\"")
 
 		switch key {
 		case "name":
@@ -27,10 +27,10 @@ func ParseShoeParams(args []string) (dataitems.Shoe, error) {
 			shoe.Silhouette = value
 		case "image_url":
 			shoe.ImageUrl = value
-		case "nicknames":
-			shoe.Nicknames = value
+		case "tags":
+			shoe.Tags = value
 		default:
-			return shoe, fmt.Errorf("unknown parameter please use format name= brand= silhouette= (optional shoe_url= nicknames=): %s", key)
+			return shoe, fmt.Errorf("unknown parameter please use format name= brand= silhouette= (optional shoe_url= tags=): %s", key)
 		}
 	}
 

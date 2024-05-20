@@ -23,7 +23,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-
     
     if *listItems == "shoes" {
         shoes, err := db.QueryShoes()
