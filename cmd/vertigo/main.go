@@ -6,14 +6,12 @@ import (
 	"log"
 	"vertigo/pkg/commandline"
 	"vertigo/pkg/database"
-	discordBot "vertigo/pkg/discordBot"
 )
 
 func main() {
 
 	listItems := flag.String("list", "", "List all items of type, -list shoes")
 	addItems := flag.String("add", "", "Add an item of type, -add shoes")
-	discordNotificationEnabled := flag.Bool("discord", false, "Notify with discord if you are adding a shoe, -discord, default false")
 	flag.Parse()
 
 	db, err := database.GetDB("data/database/test.db")
@@ -47,15 +45,6 @@ func main() {
 			log.Fatalf("Failed to insert shoe: %v", err)
 		}
 		fmt.Println("Shoe added successfully:", shoe)
-
-		if *discordNotificationEnabled {
-			err = discordBot.PostNewShoe(shoe)
-			if err != nil {
-				log.Printf("Discord couldn't be notified. %v", err)
-			}
-			fmt.Println("Discord successfully notified.")
-		}
-
 	} else {
 		fmt.Println("Use `-list shoes` to list all shoes, `-add shoe` to add a new shoe, or `-h` for more options")
 	}
