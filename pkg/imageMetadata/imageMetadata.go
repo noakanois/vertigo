@@ -8,7 +8,32 @@ import (
 	"github.com/rwcarlsen/goexif/exif"
 )
 
-func GetImageCreationDate(imagePath string) (creationDate time.Time, Error error) {
+type ImageMetaData struct {
+	latitude     float64
+	longitude    float64
+	creationDate time.Time
+}
+
+func GetImageMetaData(imagePath string) (ImageMetaData, error) {
+	latitude, longitude, err := getImageLocation(imagePath)
+	if err != nil {
+		return ImageMetaData{}, err
+	}
+
+	creationDate, err := getImageCreationDate(imagePath)
+	if err != nil {
+		return ImageMetaData{}, err
+	}
+
+	metaData := ImageMetaData{
+		latitude:     latitude,
+		longitude:    longitude,
+		creationDate: creationDate,
+	}
+	return metaData, nil
+}
+
+func getImageCreationDate(imagePath string) (creationDate time.Time, Error error) {
 	file, err := os.Open(imagePath)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error opening image: %v", err)
@@ -27,7 +52,7 @@ func GetImageCreationDate(imagePath string) (creationDate time.Time, Error error
 	return createdDate, nil
 }
 
-func GetImageLocation(imagePath string) (latitude float64, longitude float64, Error error) {
+func getImageLocation(imagePath string) (latitude float64, longitude float64, Error error) {
 	file, err := os.Open(imagePath)
 	if err != nil {
 		return 0.0, 0.0, fmt.Errorf("error opening image: %v", err)
