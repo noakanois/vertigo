@@ -16,10 +16,7 @@ List all shoes
 
 Add shoe
 
-`./vertigo -add shoes name="Mars Yard" brand="Nike" silhouette="Mars Yard"`
-
-`./vertigo -add shoes name="Air Force 1 Off White OG" brand="Nike" tags="Off White, Virgil, The Ten"`
-
+`go run ./cmd/vertigo/ -discord -add https://stockx.com/air-jordan-1-retro-high-travis-scott`
 
 Set up discord bot tokens etc in a `.env` file in the root directory, just as the `.env.template`.
 After doing that, with `--discord` as a flag while executing `.vertigo` with an `image_url`, you will send a notification to the channel set up in the `.env` file. 
