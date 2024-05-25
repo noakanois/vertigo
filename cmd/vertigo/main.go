@@ -4,15 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"vertigo/pkg/commandline"
 	"vertigo/pkg/database"
 	discordBot "vertigo/pkg/discordBot"
+	"vertigo/pkg/stockx"
 )
 
 func main() {
 
 	listItems := flag.String("list", "", "List all items of type, -list shoes")
-	addItems := flag.String("add", "", "Add an item of type, -add shoes")
+	addItems := flag.String("add", "", "Add an item of type, -add https://stockx.com/nike-air-force-1-low-07-chinese-new-year-2024")
 	discordNotificationEnabled := flag.Bool("discord", false, "Notify with discord if you are adding a shoe, -discord, default false")
 	flag.Parse()
 
@@ -35,21 +35,20 @@ func main() {
 		for _, shoe := range shoes {
 			fmt.Printf("%+v\n", shoe)
 		}
-	} else if *addItems == "shoes" {
-		shoeParams := flag.Args()
-		shoe, err := commandline.ParseShoeParams(shoeParams)
+	} else if *addItems != "" {
+		product, err := stockx.GetShoeInformation(*addItems)
 		if err != nil {
-			log.Fatalf("Failed to parse shoe params: %v", err)
+			log.Fatalf("Can't get shoe information from stockx: %v", err)
 		}
-
-		err = db.InsertShoe(shoe)
+		stockx.GetVisualItem(product.ProductName, product.MainPicture)
+		err = db.InsertShoe(product)
 		if err != nil {
 			log.Fatalf("Failed to insert shoe: %v", err)
 		}
-		fmt.Println("Shoe added successfully:", shoe)
-
+		fmt.Println("Shoe added successfully:", product)
+		
 		if *discordNotificationEnabled {
-			err = discordBot.PostNewShoe(shoe)
+			err = discordBot.PostNewShoe(product)
 			if err != nil {
 				log.Printf("Discord couldn't be notified. %v", err)
 			}

@@ -9,6 +9,7 @@ import (
 )
 
 type ProductDetails struct {
+	ID          int
 	Name        string
 	Subtitle    string
 	LastSale    string

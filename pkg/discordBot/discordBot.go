@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"vertigo/pkg/dataitems"
+	"strings"
+	"vertigo/pkg/stockx"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -96,28 +97,69 @@ func uploadImage(imageUrl string) (discordImageUrl string, Error error) {
 		fmt.Println("Image uploaded successfully, URL:", msg.Attachments[0].URL)
 		return msg.Attachments[0].URL, nil
 	} else {
-		return "", fmt.Errorf("Image uploaded, but no attachments found.")
+		return "", fmt.Errorf("image uploaded, but no attachments found")
 	}
 }
 
-func PostNewShoe(shoe dataitems.Shoe) error {
+func uploadLocalImage(filePath string) (discordImageUrl string, err error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Printf("error opening file: %v", err)
+		return "", err
+	}
+	defer file.Close()
+
+	imageFile := &discordgo.File{
+		Name:   file.Name(),
+		Reader: file,
+	}
+
+	msg, err := session.ChannelFileSend(channelIDUploadImages, imageFile.Name, imageFile.Reader)
+	if err != nil {
+		log.Printf("error uploading file: %v", err)
+		return "", err
+	}
+
+	if len(msg.Attachments) > 0 {
+		fmt.Println("Image uploaded successfully, URL:", msg.Attachments[0].URL)
+		return msg.Attachments[0].URL, nil
+	} else {
+		return "", fmt.Errorf("image uploaded, but no attachments found")
+	}
+}
+
+func PostNewShoe(shoe stockx.ProductDetails) error {
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
-
 	err := session.Open()
 	if err != nil {
-		return fmt.Errorf("Cannot open the session: %v", err)
+		return fmt.Errorf("cannot open the session: %v", err)
 	}
-
-	discordImageUrl, err := uploadImage(shoe.ImageUrl)
+	path := "img_data/" + shoe.ProductName + "/gif/" + shoe.ProductName + ".gif"
+	discordImageUrl, err := uploadLocalImage(path)
 	if err != nil {
-		return fmt.Errorf("Cannot upload the image to Discord: %v", err)
+		return fmt.Errorf("cannot upload the image to Discord: %v", err)
+	}
+	
+	var attributes []string
+	for key, value := range shoe.Attributes {
+		attributes = append(attributes, fmt.Sprintf("%s: %s", key, value))
 	}
 
+	attributesString := strings.Join(attributes, "\n")
+
+	description := fmt.Sprintf(
+		"%s\n%s\n\nLast Sale: %s\nAttributes: %v\n\nDescription:\n%s",
+		shoe.Name,
+		shoe.Subtitle,
+		shoe.LastSale,
+		attributesString,
+		shoe.Description,
+	)
 	embed := &discordgo.MessageEmbed{
 		Title:       shoe.Name,
-		Description: fmt.Sprintf("Brand: %s\nSilhouette: %s\nTags: %s", shoe.Brand, shoe.Silhouette, shoe.Tags),
+		Description: description,
 		Image: &discordgo.MessageEmbedImage{
 			URL: discordImageUrl,
 		},
@@ -126,12 +168,12 @@ func PostNewShoe(shoe dataitems.Shoe) error {
 
 	_, err = session.ChannelMessageSendEmbed(channelIDShoeUpdates, embed)
 	if err != nil {
-		return fmt.Errorf("Cannot send the embedded message: %v", err)
+		return fmt.Errorf("cannot send the embedded message: %v", err)
 	}
 
 	err = session.Close()
 	if err != nil {
-		return fmt.Errorf("Cannot close the session: %v", err)
+		return fmt.Errorf("cannot close the session: %v", err)
 	}
 
 	return nil
