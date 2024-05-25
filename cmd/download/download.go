@@ -10,5 +10,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("Can't get shoe information from stockx: %v", err)
 	}
-	stockx.GetVisualItem("1", product.MainPicture)
+	stockx.GetVisualItem(product.ProductName, product.MainPicture)
 }
