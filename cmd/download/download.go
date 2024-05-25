@@ -11,7 +11,7 @@ func main() {
 	// 	log.Fatalf("Can't get shoe information from stockx: %v", err)
 	// }
 	// stockx.GetVisualItem(product.ProductName, product.MainPicture)
-	_, err := discordBot.OnboardNewImage("img_data/shoentries/test.jpg")
+	_, _, err := discordBot.OnboardNewImage("img_data/shoentries/test.jpg")
 	if err != nil {
 		log.Fatalf("Can't onboard image: %v", err)
 	}

@@ -153,13 +153,11 @@ func OnboardNewImage(filePath string) (int64, string, error) {
 		return 0, "", fmt.Errorf("error connecting to the database: %v", err)
 	}
 
-	// Insert the image data into the database and get the ID
 	id, err := db.InsertPicture(filePath, discordImageUrl, discordMessageId, meta.Latitude, meta.Longitude, meta.CreationDate)
 	if err != nil {
 		return 0, "", fmt.Errorf("error inserting image data into the database: %v", err)
 	}
 
-	// Copy the image to the new directory with the new filename
 	newDir := "img_data/shoentries"
 	newFilePath := filepath.Join(newDir, fmt.Sprintf("%d.jpg", id))
 	err = copyFile(filePath, newFilePath)
@@ -167,7 +165,6 @@ func OnboardNewImage(filePath string) (int64, string, error) {
 		return 0, "", fmt.Errorf("error copying image file: %v", err)
 	}
 
-	// Update the file path and timestamp in the database
 	err = db.UpdatePictureFilePathAndTimestamp(id, newFilePath)
 	if err != nil {
 		return 0, "", fmt.Errorf("error updating image file path and timestamp in the database: %v", err)

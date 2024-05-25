@@ -64,7 +64,6 @@ func (db *DB) InsertPicture(localLocation, discordImageUrl, discordMessageId str
 	if err != nil {
 		return 0, fmt.Errorf("error inserting picture: %v", err)
 	}
-    log.Printf("succesfully uploaded", discordImageUrl)
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("error getting last insert id: %v", err)

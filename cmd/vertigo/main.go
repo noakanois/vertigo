@@ -65,7 +65,6 @@ func main() {
 			log.Fatalf("No shoe found with the name: %s", *shoeName)
 		}
 
-		// Onboard the image using the OnboardNewImage function
 		pictureID, discordImageUrl, err := discordBot.OnboardNewImage(*shoeEntry)
 		if err != nil {
 			log.Printf("Failed to onboard new image: %v", err)
@@ -79,7 +78,6 @@ func main() {
 			log.Fatalf("Failed to insert shoentry: %v", err)
 		}
 
-		// Insert the new shoentry
 		shoentry, err := db.GetShoentryByID(shoentryID)
 		if err != nil {
 			log.Fatalf("Failed to retrieve shoentry: %v", err)
