@@ -78,7 +78,7 @@ func main() {
 			log.Fatalf("Failed to insert shoentry: %v", err)
 		}
 
-		shoentry, err := db.GetShoentryByID(shoentryID)
+		shoentryDetails, err := db.GetShoentryByID(shoentryID)
 		if err != nil {
 			log.Fatalf("Failed to retrieve shoentry: %v", err)
 		}
@@ -86,9 +86,7 @@ func main() {
 		fmt.Println("Shoe entry added successfully")
 
 		if *discordNotificationEnabled {
-			fmt.Println(discordImageUrl)
-			fmt.Println(discordImageUrl)
-			err = discordBot.PostNewShoeEntry(shoe.Name, shoentry.ID, discordImageUrl)
+			err = discordBot.PostNewShoeEntry(*shoentryDetails)
 			if err != nil {
 				log.Printf("Discord couldn't be notified. %v", err)
 			} else {

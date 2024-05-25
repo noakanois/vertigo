@@ -250,7 +250,7 @@ func PostNewShoe(shoe stockx.ProductDetails) error {
 	return nil
 }
 
-func PostNewShoeEntry(shoeName string, shoentryID int64, discordImageUrl string) error {
+func PostNewShoeEntry(shoentry database.ShoentryDetails) error {
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
@@ -261,16 +261,17 @@ func PostNewShoeEntry(shoeName string, shoentryID int64, discordImageUrl string)
 	defer session.Close()
 
 	description := fmt.Sprintf(
-		"A new shoe entry has been added for **%s**!\nShoentry ID: %d",
-		shoeName,
-		shoentryID,
+		"A new shoe entry has been added for **%s %s**!\nTaken at %s",
+		shoentry.ShoeName,
+		shoentry.ShoeSubtitle,
+		shoentry.PictureTakenAt,
 	)
 
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("New Shoe Entry: %s", shoeName),
+		Title:       fmt.Sprintf("New Shoe Entry: %s", shoentry.ShoeName),
 		Description: description,
 		Image: &discordgo.MessageEmbedImage{
-			URL: discordImageUrl,
+			URL: shoentry.PictureDiscordURL,
 		},
 		Color: 0x4c00b0,
 	}

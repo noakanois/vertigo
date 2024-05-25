@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 	"vertigo/pkg/stockx"
 
@@ -114,6 +113,30 @@ type Shoentry struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type ShoentryDetails struct {
+	ShoentryID        int64     `json:"shoentry_id"`
+	ItemID            int64     `json:"item_id"`
+	ShoeID            int64     `json:"shoe_id"`
+	ShoeName          string    `json:"shoe_name"`
+	ShoeSubtitle      string    `json:"shoe_subtitle"`
+	ShoeLastSale      string    `json:"shoe_last_sale"`
+	ShoeProductName   string    `json:"shoe_product_name"`
+	ShoeMainPicture   string    `json:"shoe_main_picture"`
+	ShoeAttributes    string    `json:"shoe_attributes"`
+	ShoeDescription   string    `json:"shoe_description"`
+	ShoeTimestamp     time.Time `json:"shoe_timestamp"`
+	PictureID         int64     `json:"picture_id"`
+	PictureLocalPath  string    `json:"picture_local_path"`
+	PictureDiscordURL string    `json:"picture_discord_url"`
+	PictureMessageID  string    `json:"picture_message_id"`
+	PictureLatitude   float64   `json:"picture_latitude"`
+	PictureLongitude  float64   `json:"picture_longitude"`
+	PictureTakenAt    time.Time `json:"picture_taken_at"`
+	PictureUpdatedAt  time.Time `json:"picture_updated_at"`
+	PictureCreatedAt  time.Time `json:"picture_created_at"`
+	ShoentryUpdatedAt time.Time `json:"shoentry_updated_at"`
+	ShoentryCreatedAt time.Time `json:"shoentry_created_at"`
+}
 
 func (db *DB) GetShoeByProductName(name string) (*Shoe, error) {
 	query := `SELECT ID, Name, Subtitle, LastSale, ProductName, MainPicture, Attributes, Description, Timestamp FROM shoes WHERE ProductName = ?`
@@ -123,7 +146,7 @@ func (db *DB) GetShoeByProductName(name string) (*Shoe, error) {
 	err := row.Scan(&shoe.ID, &shoe.Name, &shoe.Subtitle, &shoe.LastSale, &shoe.ProductName, &shoe.MainPicture, &shoe.Attributes, &shoe.Description, &shoe.Timestamp)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // No shoe found with the given name
+			return nil, nil 
 		}
 		return nil, fmt.Errorf("error retrieving shoe: %v", err)
 	}
@@ -132,12 +155,68 @@ func (db *DB) GetShoeByProductName(name string) (*Shoe, error) {
 }
 
 
-func (db *DB) GetShoentryByID(id int64) (*Shoentry, error) {
-	query := `SELECT ID, ItemID, PictureID, UpdatedAt, CreatedAt FROM shoentries WHERE ID = ?`
+func (db *DB) GetShoentryByID(id int64) (*ShoentryDetails, error) {
+	query := `
+		SELECT 
+			shoentries.ID AS ShoentryID,
+			shoentries.ItemID,
+			shoes.ID AS ShoeID,
+			shoes.Name AS ShoeName,
+			shoes.Subtitle AS ShoeSubtitle,
+			shoes.LastSale AS ShoeLastSale,
+			shoes.ProductName AS ShoeProductName,
+			shoes.MainPicture AS ShoeMainPicture,
+			shoes.Attributes AS ShoeAttributes,
+			shoes.Description AS ShoeDescription,
+			shoes.Timestamp AS ShoeTimestamp,
+			shoentries.PictureID,
+			pictures.LocalLocation AS PictureLocalPath,
+			pictures.DiscordImageLink AS PictureDiscordURL,
+			pictures.DiscordMessageId AS PictureMessageID,
+			pictures.Latitude AS PictureLatitude,
+			pictures.Longitude AS PictureLongitude,
+			pictures.TakenAt AS PictureTakenAt,
+			pictures.UpdatedAt AS PictureUpdatedAt,
+			pictures.CreatedAt AS PictureCreatedAt,
+			shoentries.UpdatedAt AS ShoentryUpdatedAt,
+			shoentries.CreatedAt AS ShoentryCreatedAt
+		FROM 
+			shoentries
+		INNER JOIN 
+			shoes ON shoentries.ItemID = shoes.ID
+		INNER JOIN 
+			pictures ON shoentries.PictureID = pictures.ID
+		WHERE 
+			shoentries.ID = ?
+	`
+
 	row := db.QueryRow(query, id)
 
-	var shoentry Shoentry
-	err := row.Scan(&shoentry.ID, &shoentry.ItemID, &shoentry.PictureID, &shoentry.UpdatedAt, &shoentry.CreatedAt)
+	var details ShoentryDetails
+	err := row.Scan(
+		&details.ShoentryID,
+		&details.ItemID,
+		&details.ShoeID,
+		&details.ShoeName,
+		&details.ShoeSubtitle,
+		&details.ShoeLastSale,
+		&details.ShoeProductName,
+		&details.ShoeMainPicture,
+		&details.ShoeAttributes,
+		&details.ShoeDescription,
+		&details.ShoeTimestamp,
+		&details.PictureID,
+		&details.PictureLocalPath,
+		&details.PictureDiscordURL,
+		&details.PictureMessageID,
+		&details.PictureLatitude,
+		&details.PictureLongitude,
+		&details.PictureTakenAt,
+		&details.PictureUpdatedAt,
+		&details.PictureCreatedAt,
+		&details.ShoentryUpdatedAt,
+		&details.ShoentryCreatedAt,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No shoentry found with the given ID
@@ -145,5 +224,5 @@ func (db *DB) GetShoentryByID(id int64) (*Shoentry, error) {
 		return nil, fmt.Errorf("error retrieving shoentry: %v", err)
 	}
 
-	return &shoentry, nil
+	return &details, nil
 }
