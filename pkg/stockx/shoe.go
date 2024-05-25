@@ -1,7 +1,7 @@
 package stockx
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -18,20 +18,20 @@ type ProductDetails struct {
 	Description string
 }
 
-func GetShoeInformation(url string) ProductDetails {
+func GetShoeInformation(url string) (ProductDetails, error) {
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal("Error fetching page: ", err)
+		return ProductDetails{}, fmt.Errorf("error fetching page: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+		return ProductDetails{}, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		return ProductDetails{}, err
 	}
 
 	product := ProductDetails{
@@ -70,5 +70,5 @@ func GetShoeInformation(url string) ProductDetails {
 	})
 
 	product.MainPicture = "https://images.stockx.com/images/" + product.ProductName+ "-Product.jpg"
-	return product
+	return product, err
 }
