@@ -3,7 +3,6 @@ package stockx
 import (
 	"fmt"
 	"image"
-	"os/exec"
 
 	"image/jpeg"
 	"io"
@@ -12,8 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	_ "github.com/mattn/go-sqlite3"
+	"vertigo/pkg/python"
 	"github.com/nfnt/resize"
 )
 
@@ -23,19 +21,6 @@ const (
 	imageWidth      = 800
 	whiteThreshold  = 230
 )
-
-func PythonGif(input string) {
-    pythonScriptPath := "gif.py"
-	cmd := exec.Command("poetry", "run", "python", pythonScriptPath, input, imagePath)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(cmd)
-		log.Fatalf("Failed to execute command: %s", err)
-	}
-	
-	fmt.Printf("Output for input %v: %s\n", input, string(output))
-}
-
 
 func GetVisualItem(itemUUID, itemImgURL string) error {
 	imgFolderPath := filepath.Join(imagePath, itemUUID, "img")
@@ -48,7 +33,7 @@ func GetVisualItem(itemUUID, itemImgURL string) error {
 			return err
 		}
 	}
-	PythonGif(itemUUID)
+	python.PythonGif(itemUUID, imagePath)
 	if err := deleteImages(itemUUID); err != nil {
 		return err
 	}
