@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS shoes (
     silhouette TEXT, 
     image_url TEXT, 
     tags TEXT
-)
+);
