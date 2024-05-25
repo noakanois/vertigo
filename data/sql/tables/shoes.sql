@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS shoes (
     Name TEXT,
     Subtitle TEXT,
     LastSale TEXT,
-    ProductName TEXT,
+    ProductName TEXT UNIQUE,
     MainPicture TEXT,
     Attributes TEXT,
-    Description TEXT
+    Description TEXT,
+    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
