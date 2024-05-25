@@ -15,6 +15,7 @@ func (db *DB) InsertShoe(shoe dataitems.Shoe) error {
 	}
 	return nil
 }
+
 func (db *DB) QueryShoesTemplate(query string, params ...interface{}) ([]dataitems.Shoe, error) {
 	rows, err := db.Query(query, params...)
 	if err != nil {
