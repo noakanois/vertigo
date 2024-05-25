@@ -1,8 +1,11 @@
 CREATE TABLE IF NOT EXISTS shoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    brand TEXT NOT NULL, 
-    name TEXT NOT NULL,
-    silhouette TEXT, 
-    image_url TEXT, 
-    tags TEXT
-)
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT,
+    Subtitle TEXT,
+    LastSale TEXT,
+    ProductName TEXT UNIQUE,
+    MainPicture TEXT,
+    Attributes TEXT,
+    Description TEXT,
+    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);

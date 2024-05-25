@@ -1,12 +1,21 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"vertigo/pkg/database"
-	// "vertigo/pkg/shoes"
+	discordBot "vertigo/pkg/discordBot"
+	"vertigo/pkg/stockx"
 )
 
 func main() {
+
+	listItems := flag.String("list", "", "List all items of type, -list shoes")
+	addItems := flag.String("add", "", "Add an item of type, -add https://stockx.com/nike-air-force-1-low-07-chinese-new-year-2024")
+	discordNotificationEnabled := flag.Bool("discord", false, "Notify with discord if you are adding a shoe, -discord, default false")
+	flag.Parse()
+
 	db, err := database.GetDB("data/database/test.db")
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
@@ -17,29 +26,37 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// shoe := dataitems.Shoe{
-	// 	Name:       "Chicago 3",
-	// 	Brand:      "Nike",
-	// 	Silhouette: "Air Jordan 1",
-	// 	Tags:  "Chicago",
-	// }
+	if *listItems == "shoes" {
+		shoes, err := db.QueryShoes()
+		if err != nil {
+			log.Fatalf("Failed to query shoes: %v", err)
+		}
 
-	// err = db.InsertShoe(shoe)
-	// if err != nil {
-	// 	log.Fatalf("Failed to insert shoe: %v", err)
-	// }
+		for _, shoe := range shoes {
+			fmt.Printf("%+v\n", shoe)
+		}
+	} else if *addItems != "" {
+		product, err := stockx.GetShoeInformation(*addItems)
+		if err != nil {
+			log.Fatalf("Can't get shoe information from stockx: %v", err)
+		}
+		stockx.GetVisualItem(product.ProductName, product.MainPicture)
+		err = db.InsertShoe(product)
+		if err != nil {
+			log.Fatalf("Failed to insert shoe: %v", err)
+		}
+		fmt.Println("Shoe added successfully:", product)
+		
+		if *discordNotificationEnabled {
+			err = discordBot.PostNewShoe(product)
+			if err != nil {
+				log.Printf("Discord couldn't be notified. %v", err)
+			}
+			fmt.Println("Discord successfully notified.")
+		}
 
-	// shoes, err := db.QueryShoeByName("Fragment 1")
-	// if err != nil {
-	// 	log.Fatalf("Failed to query shoes: %v", err)
-	// }
-
-	shoes, err := db.QueryShoes()
-	if err != nil {
-		log.Fatalf("Failed to query shoes: %v", err)
+	} else {
+		fmt.Println("Use `-list shoes` to list all shoes, `-add shoe` to add a new shoe, or `-h` for more options")
 	}
 
-	for _, shoe := range shoes {
-		log.Printf("%+v\n", shoe)
-	}
 }
