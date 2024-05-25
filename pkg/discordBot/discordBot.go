@@ -6,7 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"vertigo/pkg/database"
+	"vertigo/pkg/imageMetadata"
 	"vertigo/pkg/stockx"
 
 	"github.com/bwmarrin/discordgo"
@@ -101,11 +104,11 @@ func uploadImage(imageUrl string) (discordImageUrl string, Error error) {
 	}
 }
 
-func uploadLocalImage(filePath string) (discordImageUrl string, err error) {
+func uploadLocalImage(filePath string) (discordImageUrl string, discordMessageId string, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Printf("error opening file: %v", err)
-		return "", err
+		return "", "", err
 	}
 	defer file.Close()
 
@@ -117,15 +120,83 @@ func uploadLocalImage(filePath string) (discordImageUrl string, err error) {
 	msg, err := session.ChannelFileSend(channelIDUploadImages, imageFile.Name, imageFile.Reader)
 	if err != nil {
 		log.Printf("error uploading file: %v", err)
-		return "", err
+		return "", "", err
 	}
 
 	if len(msg.Attachments) > 0 {
 		fmt.Println("Image uploaded successfully, URL:", msg.Attachments[0].URL)
-		return msg.Attachments[0].URL, nil
+		return msg.Attachments[0].URL, msg.ID, nil
 	} else {
-		return "", fmt.Errorf("image uploaded, but no attachments found")
+		return "", "", fmt.Errorf("image uploaded, but no attachments found")
 	}
+}
+
+func OnboardNewImage(filePath string) (int64, string, error) {
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
+	err := session.Open()
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot open the session: %v", err)
+	}
+	defer session.Close()
+
+	discordImageUrl, discordMessageId, err := uploadLocalImage(filePath)
+	if err != nil {
+		return 0, "", fmt.Errorf("error uploading image to Discord: %v", err)
+	}
+
+	meta, _ := imageMetadata.GetImageMetaData(filePath)
+
+	db, err := database.GetDB("data/database/test.db")
+	if err != nil {
+		return 0, "", fmt.Errorf("error connecting to the database: %v", err)
+	}
+
+	id, err := db.InsertPicture(filePath, discordImageUrl, discordMessageId, meta.Latitude, meta.Longitude, meta.CreationDate)
+	if err != nil {
+		return 0, "", fmt.Errorf("error inserting image data into the database: %v", err)
+	}
+
+	newDir := "img_data/shoentries"
+	newFilePath := filepath.Join(newDir, fmt.Sprintf("%d.jpg", id))
+	err = copyFile(filePath, newFilePath)
+	if err != nil {
+		return 0, "", fmt.Errorf("error copying image file: %v", err)
+	}
+
+	err = db.UpdatePictureFilePathAndTimestamp(id, newFilePath)
+	if err != nil {
+		return 0, "", fmt.Errorf("error updating image file path and timestamp in the database: %v", err)
+	}
+
+	return id, discordImageUrl, nil
+}
+
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return err
+	}
+
+	err = dstFile.Sync()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func PostNewShoe(shoe stockx.ProductDetails) error {
@@ -136,8 +207,8 @@ func PostNewShoe(shoe stockx.ProductDetails) error {
 	if err != nil {
 		return fmt.Errorf("cannot open the session: %v", err)
 	}
-	path := "img_data/" + shoe.ProductName + "/gif/" + shoe.ProductName + ".gif"
-	discordImageUrl, err := uploadLocalImage(path)
+	path := "img_data/shoes/" + shoe.ProductName + "/gif/" + shoe.ProductName + ".gif"
+	discordImageUrl, _, err := uploadLocalImage(path)
 	if err != nil {
 		return fmt.Errorf("cannot upload the image to Discord: %v", err)
 	}
@@ -174,6 +245,40 @@ func PostNewShoe(shoe stockx.ProductDetails) error {
 	err = session.Close()
 	if err != nil {
 		return fmt.Errorf("cannot close the session: %v", err)
+	}
+	
+	return nil
+}
+
+func PostNewShoeEntry(shoentry database.ShoentryDetails) error {
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
+	err := session.Open()
+	if err != nil {
+		return fmt.Errorf("cannot open the session: %v", err)
+	}
+	defer session.Close()
+
+	description := fmt.Sprintf(
+		"A new shoe entry has been added for **%s %s**!\nTaken at %s",
+		shoentry.ShoeName,
+		shoentry.ShoeSubtitle,
+		shoentry.PictureTakenAt,
+	)
+
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("New Shoe Entry: %s", shoentry.ShoeName),
+		Description: description,
+		Image: &discordgo.MessageEmbedImage{
+			URL: shoentry.PictureDiscordURL,
+		},
+		Color: 0x4c00b0,
+	}
+
+	_, err = session.ChannelMessageSendEmbed(channelIDShoeUpdates, embed)
+	if err != nil {
+		return fmt.Errorf("cannot send the embedded message: %v", err)
 	}
 
 	return nil
