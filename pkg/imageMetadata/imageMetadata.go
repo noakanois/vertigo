@@ -9,9 +9,9 @@ import (
 )
 
 type ImageMetaData struct {
-	latitude     float64
-	longitude    float64
-	creationDate time.Time
+	Latitude     float64
+	Longitude    float64
+	CreationDate time.Time
 }
 
 func GetImageMetaData(imagePath string) (ImageMetaData, error) {
@@ -26,9 +26,9 @@ func GetImageMetaData(imagePath string) (ImageMetaData, error) {
 	}
 
 	metaData := ImageMetaData{
-		latitude:     latitude,
-		longitude:    longitude,
-		creationDate: creationDate,
+		Latitude:     latitude,
+		Longitude:    longitude,
+		CreationDate: creationDate,
 	}
 	return metaData, nil
 }
@@ -69,4 +69,10 @@ func getImageLocation(imagePath string) (latitude float64, longitude float64, Er
 	}
 
 	return lat, long, nil
+}
+
+func main() {
+	fl1, fl2, err := getImageLocation("example.png")
+	fmt.Printf("error: %v ", err)
+	fmt.Printf("Here %v %v:", fl1, fl2)
 }
