@@ -9,6 +9,15 @@ import (
 
 )
 
+func init() {
+	cmd := exec.Command("poetry","install")
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(cmd)
+		log.Fatalf("error: failed to poetry install: %s", err)
+	}
+	log.Println(cmd)
+}
 
 func PythonGif(shoeid string, folderPath string) {
     err := executePython("gif.py", shoeid, folderPath)
@@ -18,14 +27,14 @@ func PythonGif(shoeid string, folderPath string) {
 	
 }
 
-func executePython(pythonScriptPath string, params ...string) error {
-	args := append([]string{"run", "python", pythonScriptPath}, params...)
+func executePython(params ...string) error {
+	args := append([]string{"run", "python"}, params...)
 	cmd := exec.Command("poetry", args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(cmd)
 		return fmt.Errorf("error: failed to execute command: %s", err)
 	}
-	fmt.Printf("Output for input %v: %s\n", params, string(output))
+	log.Printf("Output for input %v: %s\n", params, string(output))
 	return nil
 }
