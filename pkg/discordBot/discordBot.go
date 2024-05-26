@@ -1,6 +1,7 @@
 package discordBot
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -131,7 +132,11 @@ func uploadLocalImage(filePath string) (discordImageUrl string, discordMessageId
 	}
 }
 
-func OnboardNewImage(filePath string) (int64, string, error) {
+func OnboardNewImage(filePath string, ImageType string) (int64, string, error) {
+	if strings.ToLower(ImageType) != "shoe" && strings.ToLower(ImageType) != "food" {
+		return 0, "", fmt.Errorf("cannot open the session: Invalid Image Type passed")
+	}
+
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
@@ -158,7 +163,13 @@ func OnboardNewImage(filePath string) (int64, string, error) {
 		return 0, "", fmt.Errorf("error inserting image data into the database: %v", err)
 	}
 
-	newDir := "img_data/shoentries"
+	var newDir string
+	switch ImageType {
+	case "shoe":
+		newDir = "img_data/shoentries"
+	case "food":
+		newDir = "img_data/food"
+	}
 	newFilePath := filepath.Join(newDir, fmt.Sprintf("%d.jpg", id))
 	err = copyFile(filePath, newFilePath)
 	if err != nil {
@@ -199,6 +210,64 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
+func PostNewFoodEntry(food database.FoodentryDetails) error {
+	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	})
+	err := session.Open()
+	if err != nil {
+		return fmt.Errorf("cannot open the session: %v", err)
+	}
+
+	if err != nil {
+		return fmt.Errorf("cannot upload the image to Discord: %v", err)
+	}
+
+	var tags map[string]string
+	json.Unmarshal([]byte(food.RestaurantAttributes), &tags)
+
+	attributeString := ""
+
+	if tags["Cuisine"] != "" {
+		attributeString += fmt.Sprintf("%s\n", tags["Cuisine"])
+	}
+
+	if tags["AddrFull"] != "" {
+		attributeString += fmt.Sprintf("Cuisine: %s\n", tags["Cuisine"])
+	} else if tags["AddrCity"] != "" && tags["AddrPostcode"] != "" && tags["AddrStreet"] != "" {
+		attributeString += fmt.Sprintf("%s, %s, %s\n", tags["AddrStreet"], tags["AddrCity"], tags["AddrPostcode"])
+	}
+
+	if tags["Website"] != "" {
+		attributeString += fmt.Sprintf("%s\n", tags["Website"])
+	}
+
+	description := fmt.Sprintf(
+		"A new food entry has been added for **%s**!\n\n%s\n%s\nTaken at %v",
+		food.RestaurantName, food.FoodentryName, attributeString, food.PictureTakenAt,
+	)
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("New Food Entry: %s", food.FoodentryName),
+		Description: description,
+		Image: &discordgo.MessageEmbedImage{
+			URL: food.PictureDiscordURL,
+		},
+		Color: 0x4c00b0,
+	}
+
+	_, err = session.ChannelMessageSendEmbed(channelIDShoeUpdates, embed)
+	if err != nil {
+		return fmt.Errorf("cannot send the embedded message: %v", err)
+	}
+
+	err = session.Close()
+	if err != nil {
+		return fmt.Errorf("cannot close the session: %v", err)
+	}
+
+	return nil
+}
+
 func PostNewShoe(shoe stockx.ProductDetails) error {
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
@@ -212,7 +281,7 @@ func PostNewShoe(shoe stockx.ProductDetails) error {
 	if err != nil {
 		return fmt.Errorf("cannot upload the image to Discord: %v", err)
 	}
-	
+
 	var attributes []string
 	for key, value := range shoe.Attributes {
 		attributes = append(attributes, fmt.Sprintf("%s: %s", key, value))
@@ -246,7 +315,7 @@ func PostNewShoe(shoe stockx.ProductDetails) error {
 	if err != nil {
 		return fmt.Errorf("cannot close the session: %v", err)
 	}
-	
+
 	return nil
 }
 
