@@ -202,3 +202,57 @@ func (db *DB) GetShoentryByID(id int64) (*ShoentryDetails, error) {
 
 	return &details, nil
 }
+
+type Shoentry1 struct {
+    ID                 int64     `json:"id"`
+    ItemID             int64     `json:"item_id"`
+    PictureID          int64     `json:"picture_id"`
+    UpdatedAt          time.Time `json:"updated_at"`
+    CreatedAt          time.Time `json:"created_at"`
+    PictureLocalPath   string    `json:"picture_local_path"`
+    PictureDiscordURL  string    `json:"picture_discord_url"`
+    PictureMessageID   string    `json:"picture_message_id"`
+    PictureLatitude    float64   `json:"picture_latitude"`
+    PictureLongitude   float64   `json:"picture_longitude"`
+    PictureTakenAt     time.Time `json:"picture_taken_at"`
+    PictureUpdatedAt   time.Time `json:"picture_updated_at"`
+    PictureCreatedAt   time.Time `json:"picture_created_at"`
+}
+
+
+func (db *DB) GetShoentriesByShoeID(shoeID int64) ([]Shoentry1, error) {
+    query := `
+        SELECT 
+            shoentries.ID, shoentries.ItemID, shoentries.PictureID, shoentries.UpdatedAt, shoentries.CreatedAt,
+            pictures.LocalLocation, pictures.DiscordImageLink, pictures.DiscordMessageId, pictures.Latitude, pictures.Longitude, pictures.TakenAt, pictures.UpdatedAt, pictures.CreatedAt
+        FROM 
+            shoentries
+        INNER JOIN 
+            pictures ON shoentries.PictureID = pictures.ID
+        WHERE 
+            shoentries.ItemID = ?
+    `
+
+    rows, err := db.Query(query, shoeID)
+    if err != nil {
+        return nil, fmt.Errorf("error querying shoentries: %v", err)
+    }
+    defer rows.Close()
+
+    var shoentries []Shoentry1
+    for rows.Next() {
+        var shoentry Shoentry1
+        err := rows.Scan(
+            &shoentry.ID, &shoentry.ItemID, &shoentry.PictureID, &shoentry.UpdatedAt, &shoentry.CreatedAt,
+            &shoentry.PictureLocalPath, &shoentry.PictureDiscordURL, &shoentry.PictureMessageID, &shoentry.PictureLatitude, &shoentry.PictureLongitude, &shoentry.PictureTakenAt, &shoentry.PictureUpdatedAt, &shoentry.PictureCreatedAt,
+        )
+        if err != nil {
+            return nil, fmt.Errorf("error scanning shoentry: %v", err)
+        }
+        shoentries = append(shoentries, shoentry)
+    }
+    if err = rows.Err(); err != nil {
+        return nil, fmt.Errorf("error reading shoentry rows: %v", err)
+    }
+    return shoentries, nil
+}

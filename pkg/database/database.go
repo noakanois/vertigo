@@ -37,7 +37,7 @@ func (db *DB) Initialize() error {
 		return fmt.Errorf("can't read file: %v", sqlErr4)
 	}
 	query5, sqlErr5 := ReadSQLFile("data/sql/tables/pictures.sql")
-	if sqlErr3 != nil {
+	if sqlErr5 != nil {
 		return fmt.Errorf("can't read file: %v", sqlErr5)
 	}
 
@@ -55,11 +55,11 @@ func (db *DB) Initialize() error {
 	}
 	_, err4 := db.Exec(query4)
 	if err4 != nil {
-		return fmt.Errorf("error creating shoe table: %v", err3)
+		return fmt.Errorf("error creating shoe table: %v", err4)
 	}
 	_, err5 := db.Exec(query5)
 	if err5 != nil {
-		return fmt.Errorf("error creating shoe table: %v", err3)
+		return fmt.Errorf("error creating shoe table: %v", err5)
 	}
 	return nil
 }
