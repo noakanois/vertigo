@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	imagePath       = "./img_data"
+	imagePath       = "./img_data/shoes"
 	numImages       = 36
 	imageWidth      = 800
 	whiteThreshold  = 230

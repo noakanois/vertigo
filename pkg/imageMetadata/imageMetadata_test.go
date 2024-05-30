@@ -22,18 +22,18 @@ func TestGetImageMetaData(t *testing.T) {
 	cestLocation := time.FixedZone("CEST", 2*60*60)
 	expectedDate := time.Date(2023, 5, 18, 16, 43, 37, 0, cestLocation)
 
-	if !metadata.creationDate.Equal(expectedDate) {
-		t.Fatalf("Expected date: {%v}, got: {%v}", expectedDate, metadata.creationDate)
+	if !metadata.CreationDate.Equal(expectedDate) {
+		t.Fatalf("Expected date: {%v}, got: {%v}", expectedDate, metadata.CreationDate)
 	}
 
 	expectedLatitude := 40.75397777777778
 	expectedLongitude := -74.002425
 
-	if metadata.latitude != expectedLatitude {
-		t.Fatalf("Expected latitude: {%v}, got {%v}", expectedLatitude, metadata.latitude)
+	if metadata.Latitude != expectedLatitude {
+		t.Fatalf("Expected latitude: {%v}, got {%v}", expectedLatitude, metadata.Latitude)
 	}
-	if metadata.longitude != expectedLongitude {
-		t.Fatalf("Expected longitude: {%v}, got {%v}", expectedLongitude, metadata.longitude)
+	if metadata.Longitude != expectedLongitude {
+		t.Fatalf("Expected longitude: {%v}, got {%v}", expectedLongitude, metadata.Longitude)
 	}
 }
 
