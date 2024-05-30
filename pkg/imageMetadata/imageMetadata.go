@@ -70,3 +70,9 @@ func getImageLocation(imagePath string) (latitude float64, longitude float64, Er
 
 	return lat, long, nil
 }
+
+func main() {
+	fl1, fl2, err := getImageLocation("example.png")
+	fmt.Printf("error: %v ", err)
+	fmt.Printf("Here %v %v:", fl1, fl2)
+}
