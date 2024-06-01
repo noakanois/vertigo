@@ -10,6 +10,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+
+
 func (db *DB) InsertShoe(pd stockx.ProductDetails) error {
 	attributesJSON, err := json.Marshal(pd.Attributes)
 	if err != nil {

@@ -63,3 +63,4 @@ func (db *DB) Initialize() error {
 	}
 	return nil
 }
+

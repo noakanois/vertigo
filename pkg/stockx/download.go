@@ -3,7 +3,6 @@ package stockx
 import (
 	"fmt"
 	"image"
-
 	"image/jpeg"
 	"io"
 	"log"
@@ -12,19 +11,62 @@ import (
 	"path/filepath"
 	"strings"
 	"vertigo/pkg/python"
+	"vertigo/pkg/s3"
+	"time"
 	"github.com/nfnt/resize"
+	_ "github.com/mattn/go-sqlite3"
+	"database/sql"
 )
 
 const (
-	imagePath       = "./img_data/shoes"
-	numImages       = 36
-	imageWidth      = 800
-	whiteThreshold  = 230
+	imagePath      = "./img_data/shoes"
+	numImages      = 36
+	imageWidth     = 800
+	whiteThreshold = 230
+	bucketName     = "vertigo"
 )
 
+
+type DB struct {
+	*sql.DB
+}
+
+
+func GetDB(databasePath string) (*DB, error) {
+	db, err := sql.Open("sqlite3", databasePath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %v", err)
+	}
+	return &DB{db}, nil
+}
+func (db *DB) UpdateShoeImageURLs(productName, mainImgURL, spinningGifURL string) error {
+	query := `UPDATE shoes SET MainPicture = ?, SpinningGifURL = ? WHERE ProductName = ?`
+	_, err := db.Exec(query, mainImgURL, spinningGifURL, productName)
+	if err != nil {
+		return fmt.Errorf("error updating shoe image URLs: %v", err)
+	}
+	return nil
+}
+
+
+func saveImageURLsToDB(itemUUID, mainImgURL, spinningGifURL string) error {
+	db, err :=  GetDB("data/database/test.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %v", err)
+	}
+
+	// Assuming there's a function to update the main picture and spinning gif URLs in your database
+	err = db.UpdateShoeImageURLs(itemUUID, mainImgURL, spinningGifURL)
+	if err != nil {
+		return fmt.Errorf("failed to update image URLs in database: %v", err)
+	}
+
+	return nil
+}
+
 func GetVisualItem(itemUUID, itemImgURL string) error {
-	imgFolderPath := filepath.Join(imagePath, itemUUID, "img")
-	firstImgPath := filepath.Join(imgFolderPath, "MAIN.png")
+	shoeFolderPath := filepath.Join(imagePath, itemUUID)
+	firstImgPath := filepath.Join(shoeFolderPath, "main.png")
 	if _, err := os.Stat(firstImgPath); os.IsNotExist(err) {
 		if err := downloadFirstImg(itemUUID, itemImgURL, true); err != nil {
 			return err
@@ -37,12 +79,35 @@ func GetVisualItem(itemUUID, itemImgURL string) error {
 	if err := deleteImages(itemUUID); err != nil {
 		return err
 	}
+
+	time.Sleep(3 * time.Second)
+	// Upload main.png to R2
+	mainImgKey := fmt.Sprintf("%s/main.png", itemUUID)
+	mainImgURL, err := s3.UploadToR2(bucketName, mainImgKey, firstImgPath)
+	if err != nil {
+		return fmt.Errorf("failed to upload main.png to R2: %v", err)
+	}
+
+	// Upload spinning.gif to R2
+	spinningGifPath := filepath.Join(shoeFolderPath, "spinning.gif")
+	spinningGifKey := fmt.Sprintf("%s/spinning.gif", itemUUID)
+	spinningGifURL, err := s3.UploadToR2(bucketName, spinningGifKey, spinningGifPath)
+	if err != nil {
+		return fmt.Errorf("failed to upload spinning.gif to R2: %v", err)
+	}
+
+	// Save URLs to the database
+	err = saveImageURLsToDB(itemUUID, mainImgURL, spinningGifURL)
+	if err != nil {
+		return fmt.Errorf("failed to save image URLs to database: %v", err)
+	}
+
+	fmt.Println(spinningGifURL, mainImgURL)
 	return nil
 }
-
 func downloadFirstImg(itemUUID, imgURL string, redownload bool) error {
-	imgFolderPath := prepareImageFolder(itemUUID)
-	firstImgPath := filepath.Join(imgFolderPath, "MAIN"+".png")
+	shoeFolderPath := prepareShoeFolder(itemUUID)
+	firstImgPath := filepath.Join(shoeFolderPath, "main.png")
 
 	if !redownload && fileExists(firstImgPath) {
 		return nil
@@ -67,14 +132,14 @@ func downloadStandardImage(baseURL, savePath string) bool {
 }
 
 func download360Images(itemUUID, baseURL string, redownload bool) error {
-	imgFolderPath := prepareImageFolder(itemUUID)
-	if !redownload && fileExists(filepath.Join(imagePath, itemUUID, "gif")) {
+	shoeFolderPath := prepareShoeFolder(itemUUID)
+	if !redownload && fileExists(filepath.Join(shoeFolderPath, "spinning.gif")) {
 		return nil
 	}
 
 	for i := 1; i <= numImages; i++ {
 		index := fmt.Sprintf("%02d", i)
-		imgSavePath := filepath.Join(imgFolderPath, index+".jpg")
+		imgSavePath := filepath.Join(shoeFolderPath, index+".jpg")
 		if !download360Image(baseURL, index, imgSavePath) {
 			return fmt.Errorf("failed to download image %d for %s", i, itemUUID)
 		}
@@ -82,11 +147,12 @@ func download360Images(itemUUID, baseURL string, redownload bool) error {
 	return nil
 }
 
+
 func deleteImages(uuid string) error {
-	imgFolderPath := filepath.Join(imagePath, uuid, "img")
+	shoeFolderPath := filepath.Join(imagePath, uuid)
 	for i := 1; i <= numImages; i++ {
 		index := fmt.Sprintf("%02d", i)
-		imgPath := filepath.Join(imgFolderPath, index+".jpg")
+		imgPath := filepath.Join(shoeFolderPath, index+".jpg")
 		if err := os.Remove(imgPath); err != nil {
 			log.Printf("Failed to remove image %s for %s: %v", index, uuid, err)
 		} else {
@@ -138,10 +204,10 @@ func convertURLTo360URL(imageURL, index string) string {
 		urlKey360, urlKey360, index, imageWidth)
 }
 
-func prepareImageFolder(uuid string) string {
-	imgFolderPath := filepath.Join(imagePath, uuid, "img")
-	os.MkdirAll(imgFolderPath, os.ModePerm)
-	return imgFolderPath
+func prepareShoeFolder(uuid string) string {
+	shoeFolderPath := filepath.Join(imagePath, uuid)
+	os.MkdirAll(shoeFolderPath, os.ModePerm)
+	return shoeFolderPath
 }
 
 func isRowWhite(row []uint8, threshold uint8) bool {
@@ -233,5 +299,3 @@ func cropImage(img image.Image) image.Image {
 		SubImage(r image.Rectangle) image.Image
 	}).SubImage(image.Rect(0, topCrop, bounds.Dx(), bounds.Dy()-bottomCrop))
 }
-
-

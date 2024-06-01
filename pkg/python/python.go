@@ -28,7 +28,7 @@ func PythonGif(shoeid string, folderPath string) {
 }
 
 func executePython(params ...string) error {
-	args := append([]string{"run", "python"}, params...)
+	args := append([]string{"run", "python3"}, params...)
 	cmd := exec.Command("poetry", args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

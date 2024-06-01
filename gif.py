@@ -9,9 +9,10 @@ NUM_IMAGES = 36
 INDEX_LENGTH = 2
 
 def make_gif(uuid, image_path):
-    gif_folder_path = os.path.join(image_path, uuid, "gif")
-    img_folder_path = os.path.join(image_path, uuid, "img")
-    if os.path.exists(gif_folder_path):
+    shoe_folder_path = os.path.join(image_path, uuid)
+    gif_folder_path = shoe_folder_path
+    img_folder_path = shoe_folder_path
+    if os.path.exists(os.path.join(gif_folder_path, "spinning.gif")):
         return False
     logging.info(f"Creating gif for {uuid}.")
     img_files = [f for f in os.listdir(img_folder_path) if f.endswith(".jpg")]
@@ -22,7 +23,7 @@ def make_gif(uuid, image_path):
     ]
 
     os.makedirs(gif_folder_path, exist_ok=True)
-    gif_path = os.path.join(gif_folder_path, f"{uuid}.gif")
+    gif_path = os.path.join(gif_folder_path, "spinning.gif")
     frames[0].save(
         gif_path,
         format="GIF",

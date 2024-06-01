@@ -7,5 +7,6 @@ CREATE TABLE IF NOT EXISTS shoes (
     MainPicture TEXT,
     Attributes TEXT,
     Description TEXT,
-    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    SpinningGifURL TEXT
 );
